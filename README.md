@@ -63,83 +63,51 @@ Unstructured Product Catalogs (synthetic + FDA 510k public data)
 
 ## Key Results
 
-### Retrieval Benchmark (500-query eval set, catalog of ~8,000 products)
+### Retrieval Benchmark (496 queries eval set, catalog of ~370 products)
 
 | Method | Recall@5 | Recall@10 | MRR | NDCG@10 |
 |---|---|---|---|---|
-| BM25 (baseline) | 0.61 | 0.72 | 0.54 | 0.58 |
-| Bi-encoder (`all-MiniLM-L6-v2`) | 0.74 | 0.83 | 0.67 | 0.71 |
-| Bi-encoder (`medcpt-query`) | 0.79 | 0.87 | 0.71 | 0.76 |
-| **Hybrid (BM25 + MedCPT, RRF)** | **0.86** | **0.92** | **0.78** | **0.83** |
+| BM25 (baseline) | 0.529 | 0.833 | 0.917 | 0.845 |
+| Dense (all-MiniLM-L6-v2) | 0.419 | 0.594 | 0.838 | 0.643 |
+| **Hybrid (BM25 + Dense, RRF)** | **0.504** | **0.737** | **0.931** | **0.777** |
 
-> Hybrid retrieval closes ~65% of the gap between keyword-only and an oracle retriever.
-> Failure analysis shows remaining errors concentrate in two categories: highly abbreviated
-> clinical terms (e.g. "PTFE 4-0 CV") and cross-lingual queries (German/English mixed input).
+> BM25 performs strongly on synthetic data due to high lexical overlap between 
+> queries and catalog descriptions — a known limitation of template-generated data. 
+> Hybrid RRF achieves the highest MRR (0.931) and outperforms dense-only retrieval 
+> across all metrics. On real procurement data with more varied terminology, 
+> the gap between BM25 and hybrid would be expected to widen.
 
-### Failure Analysis (top error categories)
+> **Failure analysis** (30 queries with Recall@5 ≤ 0.2):
+> - **catalog_inconsistency** (80%): same product described differently across suppliers — fix with catalog normalisation
+> - **spec_only** (17%): pure numeric specs without product name context — fix with structured metadata pre-filter
+> - **multilingual** (3%): German buyer queries vs English catalog — fix with multilingual embedder
 
-| Category | Share of failures | Pattern |
-|---|---|---|
-| Clinical abbreviations | 34% | Short tokens not in embedder vocabulary |
-| Cross-lingual input | 28% | German product names vs English catalog |
-| Spec-only queries | 21% | Numeric specs without product name context |
-| Catalog inconsistency | 17% | Same product described differently across suppliers |
-
-> **Implication**: a domain-specific embedding fine-tuned on procurement terminology
-> would likely recover most of the abbreviation and spec-only failures.
+> **Implication**: the dominant failure mode is catalog inconsistency — 
+> the same product described differently across suppliers. 
+> This is a data quality problem, not a retrieval problem; 
+> catalog normalisation at ingestion time would recover most of these failures.
 
 ---
 
 ## Project Structure
 
 ```
-medical-procurement-intelligence/
-├── data/
-│   ├── raw/
-│   │   └── fda_510k_sample.csv         # Public FDA 510(k) device listings (subset)
-│   └── processed/
-│       ├── catalog.jsonl               # Unified product catalog (generated)
-│       └── eval_set.jsonl              # Query → relevant product pairs (generated)
-├── src/
-│   ├── data/
-│   │   ├── ingest.py                   # Parse FDA CSV + synthetic supplier sheets
-│   │   ├── clean.py                    # Normalise units, strip boilerplate, dedup
-│   │   └── generate_eval.py            # Build ground-truth query-product pairs
-│   ├── retrieval/
-│   │   ├── bm25_retriever.py           # BM25 via rank_bm25
-│   │   ├── dense_retriever.py          # Bi-encoder via sentence-transformers + FAISS
-│   │   └── hybrid_retriever.py         # Reciprocal Rank Fusion over BM25 + dense
-│   ├── eval/
-│   │   ├── metrics.py                  # Recall@K, MRR, NDCG, per-category breakdown
-│   │   └── run_eval.py                 # Full benchmark across all retrievers
-│   ├── agent/
-│   │   ├── procurement_agent.py        # LLM agent: retrieve → re-rank → brief
-│   │   └── prompts.py                  # Structured prompts + output schemas
-│   └── report/
-│       └── report_generator.py         # Self-contained HTML benchmark report
-├── scripts/
-│   ├── build_catalog.py                # End-to-end: ingest → clean → index
-│   ├── run_benchmark.py                # Run eval across all retrievers, save results
-│   └── run_agent.py                    # Interactive procurement agent demo
-├── notebooks/
-│   ├── 01_data_exploration.ipynb
-│   ├── 02_retrieval_comparison.ipynb
-│   └── 03_failure_analysis.ipynb
-├── configs/
-│   └── config.yaml                     # Model names, index paths, eval thresholds
-├── frontend/                           # Next.js demo UI (TypeScript)
-│   ├── src/
-│   │   ├── app/
-│   │   │   └── page.tsx                # Search interface + results display
-│   │   └── components/
-│   │       ├── SearchBar.tsx
-│   │       ├── ResultCard.tsx
-│   │       └── MetricsPanel.tsx
-│   ├── package.json
-│   └── tsconfig.json
-├── outputs/                            # Generated reports + benchmark CSVs
-├── requirements.txt
-└── README.md
+├── retrieval/
+│   ├── bm25_retriever.py    ← 删，实际都在hybrid_retriever.py里
+│   ├── dense_retriever.py   ← 删
+├── eval/
+│   └── run_eval.py          ← 删，实际是run_benchmark.py
+├── agent/
+│   └── prompts.py           ← 删
+├── notebooks/               ← 删，你没有这个
+│   ├── 01_...
+│   ├── 02_...
+│   └── 03_...
+├── frontend/
+│   └── components/          ← 删，你没有这个
+│       ├── SearchBar.tsx
+│       ├── ResultCard.tsx
+│       └── MetricsPanel.tsx
 ```
 
 ---
@@ -166,7 +134,7 @@ python scripts/build_catalog.py
 
 ```bash
 python scripts/run_benchmark.py
-# Evaluates BM25, bi-encoder, and hybrid retriever on the 500-query eval set.
+# Evaluates BM25, bi-encoder, and hybrid retriever on the 496-query eval set.
 # Outputs results to outputs/benchmark_results.csv and opens benchmark_report.html.
 ```
 
