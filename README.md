@@ -92,22 +92,51 @@ Unstructured Product Catalogs (synthetic + FDA 510k public data)
 ## Project Structure
 
 ```
-├── retrieval/
-│   ├── bm25_retriever.py    ← 删，实际都在hybrid_retriever.py里
-│   ├── dense_retriever.py   ← 删
-├── eval/
-│   └── run_eval.py          ← 删，实际是run_benchmark.py
-├── agent/
-│   └── prompts.py           ← 删
-├── notebooks/               ← 删，你没有这个
-│   ├── 01_...
-│   ├── 02_...
-│   └── 03_...
+medical-procurement-intelligence/
+├── data/
+│   ├── raw/
+│   └── processed/
+│       ├── catalog.jsonl
+│       ├── eval_set.jsonl
+│       ├── bm25_index.pkl
+│       ├── dense_index.pkl
+│       └── catalog_index.json
+├── src/
+│   ├── __init__.py
+│   ├── data/
+│   │   ├── __init__.py
+│   │   ├── ingest.py
+│   │   ├── clean.py
+│   │   └── generate_eval.py
+│   ├── retrieval/
+│   │   ├── __init__.py
+│   │   └── hybrid_retriever.py
+│   ├── eval/
+│   │   ├── __init__.py
+│   │   └── metrics.py
+│   ├── agent/
+│   │   ├── __init__.py
+│   │   └── procurement_agent.py
+│   └── report/
+│       ├── __init__.py
+│       └── report_generator.py
+├── scripts/
+│   ├── build_catalog.py
+│   ├── run_benchmark.py
+│   └── run_agent.py
 ├── frontend/
-│   └── components/          ← 删，你没有这个
-│       ├── SearchBar.tsx
-│       ├── ResultCard.tsx
-│       └── MetricsPanel.tsx
+│   └── src/
+│       └── app/
+│           └── page.tsx
+├── configs/
+│   └── config.yaml
+├── outputs/
+│   ├── benchmark_results.csv
+│   └── benchmark_report.html
+├── setup.py
+├── .gitignore
+├── requirements.txt
+└── README.md
 ```
 
 ---
