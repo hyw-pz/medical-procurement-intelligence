@@ -1,0 +1,13 @@
+catalog_path: data/processed/catalog.jsonl
+eval_path: data/processed/eval_set.jsonl
+output_dir: outputs/
+dense_model: all-MiniLM-L6-v2
+rrf_k: 60
+top_k: 10
+recall_at_k_values: [1, 5, 10]
+failure_threshold: 0.2
+llm_model: claude-sonnet-4-20250514
+agent_top_k: 10
+n_synthetic_products: 6000
+synthetic_seed: 42
+n_eval_queries: 500
